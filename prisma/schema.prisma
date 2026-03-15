@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  apiKey    String   @unique
+  url       String?
+  createdAt DateTime @default(now())
+  reviews   Review[]
+}
+
+model Company {
+  id        String            @id @default(uuid())
+  name      String
+  email     String            @unique
+  password  String
+  domain    String?
+  verified  Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  tools     Tool[]
+  responses CompanyResponse[]
+}
+
+model Tool {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  name         String
+  category     String
+  url          String
+  description  String
+  chains       String[]
+  pricing      String
+  quickstart   String?
+  claimedBy    String?
+  company      Company? @relation(fields: [claimedBy], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  reviews      Review[]
+  capabilities String[]
+  authMethod   String?
+  sdkInstall   String?
+  llmsTxt      String?
+}
+
+model Review {
+  id         String           @id @default(uuid())
+  toolId     String
+  tool       Tool             @relation(fields: [toolId], references: [id])
+  agentId    String
+  agent      Agent            @relation(fields: [agentId], references: [id])
+  rating     Int
+  title      String
+  pros       String[]
+  cons       String[]
+  body       String?
+  tested     Boolean          @default(false)
+  testProof  String?
+  lastTested DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  response   CompanyResponse?
+
+  @@unique([toolId, agentId])
+}
+
+model CompanyResponse {
+  id        String   @id @default(uuid())
+  reviewId  String   @unique
+  review    Review   @relation(fields: [reviewId], references: [id])
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
